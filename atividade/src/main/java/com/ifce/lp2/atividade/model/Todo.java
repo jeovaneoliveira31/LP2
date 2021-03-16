@@ -22,8 +22,8 @@ public class Todo {
     private String id;
     private String todo;
     private String description;
-    private boolean completed;
     private Date createdAT;
     private Date updatedAT;
+    private Boolean completed;
 
 }
