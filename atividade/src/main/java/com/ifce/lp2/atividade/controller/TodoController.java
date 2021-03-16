@@ -4,8 +4,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.ConstraintViolationException;
+
+import com.ifce.lp2.atividade.exeption.TodoCollectionExeption;
 import com.ifce.lp2.atividade.model.Todo;
 import com.ifce.lp2.atividade.repository.TodoRepository;
+import com.ifce.lp2.atividade.service.TodoService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,68 +28,57 @@ public class TodoController {
     @Autowired
     private TodoRepository todorepo;
 
+    @Autowired
+    private TodoService todoService;
+
     @GetMapping("/Todos")
     public ResponseEntity<?> getAllTodos(){
 
-        List<Todo> Todos = todorepo.findAll();
-
-        if (Todos.size() > 0) {
-            return new ResponseEntity<List<Todo>>(Todos, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("No Todos Avaliable", HttpStatus.NOT_FOUND);
-        }
+        List<Todo> Todos = todoService.getAllTodos();
+        return new ResponseEntity<>(Todos, Todos.size()> 0 ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
     @PostMapping("/Todos")
     public ResponseEntity<?> createTodo(@RequestBody Todo todo){
         try {
-            todo.setCreatedAT(new Date(System.currentTimeMillis()));
-            todorepo.save(todo);
+            todoService.CreateTodo(todo);
             return new ResponseEntity<Todo>(todo, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(e.getMessage(),HttpStatus.UNPROCESSABLE_ENTITY);
+        } catch(TodoCollectionExeption e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }
     }
 
     @GetMapping("/Todos/{id}")
     public ResponseEntity<?> getSingleTodo(@PathVariable("id") String id) {
-        Optional<Todo> todoOptinal = todorepo.findById(id);
-
-        if (todoOptinal.isPresent()) {
-            return new ResponseEntity<>(todoOptinal.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Todo not found with id"+id, HttpStatus.NOT_FOUND);
+        try {
+            return new ResponseEntity<>(todoService.getSingleTodo(id), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_FOUND);
         }
-        
     }
 
     @PutMapping("/Todos/{id}")
     public ResponseEntity<?> updateById(@PathVariable("id") String id, @RequestBody Todo todo) {
-        Optional<Todo> todoOptinal = todorepo.findById(id);
-
-        if (todoOptinal.isPresent()) {
-            Todo todoToSave = todoOptinal.get();
-            todoToSave.setCompleted( todo.getCompleted() != null ? todo.getCompleted(): todoToSave.getCompleted());
-            todoToSave.setTodo(todo.getTodo() != null ? todo.getTodo(): todoToSave.getTodo());
-            todoToSave.setDescription(todo.getDescription() !=null ? todo.getDescription() : todoToSave.getDescription());
-            todoToSave.setUpdatedAT(new Date(System.currentTimeMillis()));
-            todorepo.save(todoToSave);
-            return new ResponseEntity<>(todoToSave, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Todo not found with id"+id, HttpStatus.NOT_FOUND);
-        }
-        
+        try {
+            todoService.updateTodo(id, todo);
+            return new ResponseEntity<>("Update todo with id "+id, HttpStatus.OK);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(e.getMessage(),HttpStatus.UNPROCESSABLE_ENTITY);
+        } catch (TodoCollectionExeption e){
+            return new ResponseEntity<>(e.getMessage(),HttpStatus.NOT_FOUND);
+        }  
     }
 
     @DeleteMapping("/Todos/{id}")
     public ResponseEntity<?> deleteById(@PathVariable("id") String id){
         try {
-            todorepo.deleteById(id);
+            todoService.deleteTodoById(id);
             return new ResponseEntity<>( "Sucessfully deleted with id "+id, HttpStatus.OK);
 
-        } catch (Exception e) {
+        } catch (TodoCollectionExeption e) {
            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
-
     }
 }
