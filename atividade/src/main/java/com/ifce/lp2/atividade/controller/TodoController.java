@@ -1,14 +1,11 @@
 package com.ifce.lp2.atividade.controller;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.ConstraintViolationException;
 
 import com.ifce.lp2.atividade.exeption.TodoCollectionExeption;
 import com.ifce.lp2.atividade.model.Todo;
-import com.ifce.lp2.atividade.repository.TodoRepository;
 import com.ifce.lp2.atividade.service.TodoService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TodoController {
 
-    @Autowired
-    private TodoRepository todorepo;
 
     @Autowired
     private TodoService todoService;
